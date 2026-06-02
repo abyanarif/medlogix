@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['nama_obat', 'brand', 'informasi_general', 'no_batch', 'exp_date', 'stok', 'harga', 'tanggal_masuk'])]
+#[Fillable(['nama_obat', 'brand', 'informasi_general', 'alert_level', 'no_batch', 'exp_date', 'stok', 'harga', 'tanggal_masuk'])]
 class Medicine extends Model
 {
     use HasFactory;
@@ -16,6 +16,14 @@ class Medicine extends Model
         'exp_date' => 'date',
         'tanggal_masuk' => 'date',
     ];
+
+    /**
+     * Get the outflows for this medicine.
+     */
+    public function outflows(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MedicineOutflow::class);
+    }
 
     /**
      * Calculate remaining days until expiry.

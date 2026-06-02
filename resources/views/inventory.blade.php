@@ -90,7 +90,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 <!-- Exp Date -->
                 <div>
                     <label for="exp_date" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">Tanggal Kadaluarsa (Exp Date)</label>
@@ -115,6 +115,21 @@
                         class="block w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
                         placeholder="Rp"
                     >
+                </div>
+
+                <!-- Alert Level -->
+                <div>
+                    <label for="alert_level" class="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">Alert Level (Prioritas)</label>
+                    <select 
+                        id="alert_level" 
+                        name="alert_level" 
+                        required
+                        class="block w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-sm"
+                    >
+                        <option value="info" selected>Info (Blue)</option>
+                        <option value="warning">Warning (Yellow)</option>
+                        <option value="danger">Danger (Red)</option>
+                    </select>
                 </div>
             </div>
 

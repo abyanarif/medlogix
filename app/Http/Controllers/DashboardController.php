@@ -16,10 +16,9 @@ class DashboardController extends Controller
     public function index()
     {
         $medicines = Medicine::all()->map(function ($medicine) {
-            // Simulate dynamic apothecary sales/transactions
-            // Simple robust formula: (150 - stok) * 1.5 + seed value, max 500
-            $simulatedSales = max(5, round((150 - $medicine->stok) * 1.2 + ($medicine->id * 4)));
-            $medicine->obat_keluar = $simulatedSales;
+            // Dynamically calculate the total volume of medicine dispensed
+            // Use Eloquent to query the MedicineOutflow model and SUM the jumlah_keluar for each specific medicine.
+            $medicine->obat_keluar = \App\Models\MedicineOutflow::where('medicine_id', $medicine->id)->sum('jumlah_keluar');
             return $medicine;
         });
 
@@ -72,6 +71,7 @@ class DashboardController extends Controller
             'exp_date' => 'required|date',
             'harga' => 'required|integer|min:0',
             'informasi_general' => 'required|string',
+            'alert_level' => 'required|in:danger,warning,info',
         ]);
 
         // Add visual prefix to make general info uniform

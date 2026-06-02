@@ -45,6 +45,10 @@
                         <a href="{{ route('stock-reminder') }}" class="px-3 py-2 rounded-lg text-sm font-semibold {{ Route::currentRouteName() == 'stock-reminder' ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' }} transition text-nowrap">
                             <i class="fas fa-bell mr-1"></i> Stock & Reminder
                         </a>
+                        
+                        <a href="{{ route('logs.index') }}" class="px-3 py-2 rounded-lg text-sm font-semibold {{ Route::currentRouteName() == 'logs.index' ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' }} transition text-nowrap">
+                            <i class="fas fa-history mr-1"></i> Log Transaksi
+                        </a>
                     @endauth
 
                     <!-- Dark Mode Toggle -->

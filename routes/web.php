@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MedicineController;
+use App\Http\Controllers\LogController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -28,4 +30,15 @@ Route::middleware('auth')->group(function () {
 
     // Data Stock & Reminder Branch
     Route::get('/stock-reminder', [DashboardController::class, 'stockReminder'])->name('stock-reminder');
+
+    // Medicine CRUD Edit & Update
+    Route::get('/medicines/{id}/edit', [MedicineController::class, 'edit'])->name('medicines.edit');
+    Route::put('/medicines/{id}', [MedicineController::class, 'update'])->name('medicines.update');
+
+    // Dispense Medicine
+    Route::get('/inventory/{id}/dispense', [MedicineController::class, 'showDispenseForm'])->name('medicines.dispense');
+    Route::post('/inventory/{id}/dispense', [MedicineController::class, 'dispense'])->name('medicines.dispense.submit');
+
+    // Audit Trail / Transaction Log
+    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
 });

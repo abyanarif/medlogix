@@ -130,19 +130,23 @@
 
                         <!-- General Information Warning alerts -->
                         <td class="py-4.5 px-6">
-                            @if (str_contains(strtolower($medicine->informasi_general), 'hati'))
-                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20 px-3 py-1.5 rounded-lg border border-rose-100 dark:border-rose-900/30">
-                                    <i class="fas fa-triangle-exclamation text-rose-500"></i> {{ str_replace('Alert:', '', $medicine->informasi_general) }}
-                                </span>
-                            @elseif (str_contains(strtolower($medicine->informasi_general), 'habiskan'))
-                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 px-3 py-1.5 rounded-lg border border-amber-100 dark:border-amber-900/30">
-                                    <i class="fas fa-circle-exclamation text-amber-500"></i> {{ str_replace('Alert:', '', $medicine->informasi_general) }}
-                                </span>
-                            @else
-                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 px-3 py-1.5 rounded-lg border border-blue-100 dark:border-blue-900/30">
-                                    <i class="fas fa-info-circle text-blue-500"></i> {{ str_replace('Alert:', '', $medicine->informasi_general) }}
-                                </span>
-                            @endif
+                            @php
+                                $badgeStyle = match($medicine->alert_level ?? 'info') {
+                                    'danger' => 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30',
+                                    'warning' => 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30',
+                                    'info' => 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30',
+                                    default => 'text-gray-700 dark:text-gray-400 bg-gray-50 dark:bg-gray-950/20 border border-gray-100 dark:border-gray-900/30',
+                                };
+                                $icon = match($medicine->alert_level ?? 'info') {
+                                    'danger' => 'fa-triangle-exclamation text-red-500',
+                                    'warning' => 'fa-circle-exclamation text-amber-500',
+                                    'info' => 'fa-info-circle text-blue-500',
+                                    default => 'fa-circle-question text-gray-500',
+                                };
+                            @endphp
+                            <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg border {{ $badgeStyle }}">
+                                <i class="fas {{ $icon }}"></i> {{ str_replace('Alert:', '', $medicine->informasi_general) }}
+                            </span>
                         </td>
                     </tr>
                 @endforeach

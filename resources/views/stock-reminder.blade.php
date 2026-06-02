@@ -63,6 +63,7 @@
                     <th class="py-4 px-6 text-center">Jumlah Stock</th>
                     <th class="py-4 px-6 text-center">Exp Date</th>
                     <th class="py-4 px-6 text-center">Status</th>
+                    <th class="py-4 px-6 text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-sm">
@@ -129,6 +130,18 @@
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aman
                                 </span>
                             @endif
+                        </td>
+
+                        <!-- Action buttons -->
+                        <td class="py-4.5 px-6 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{{ route('medicines.edit', $medicine->id) }}" class="inline-flex items-center justify-center p-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/20 transition" title="Edit Data Obat">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ route('medicines.dispense', $medicine->id) }}" class="inline-flex items-center justify-center p-2 rounded-lg bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/20 transition" title="Catat Pengeluaran (Dispense)">
+                                    <i class="fas fa-minus-circle"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @endforeach
