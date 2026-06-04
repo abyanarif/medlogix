@@ -1,4 +1,4 @@
-# MedLogix - Smart Pharmaceutical Management System
+    # MedLogix - Smart Pharmaceutical Management System
 ## MVP Implementation Guide
 
 ### 🎯 Project Overview

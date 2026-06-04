@@ -5,8 +5,15 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MedicineController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\BillingController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
+// Public Landing Page
+Route::get('/', function () {
+    return view('landing_page');
+})->name('landing');
 
 // Guest Routes
 Route::middleware('guest')->group(function () {
@@ -20,25 +27,40 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-    // Dashboard Home (Dashboard Apoteker Branch)
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    // Billing Flow (Pharmacist Side)
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing/upload', [BillingController::class, 'upload'])->name('billing.upload');
 
-    // Kelola Inventory Branch (Form & Notification Config)
-    Route::get('/inventory', [DashboardController::class, 'inventory'])->name('inventory');
-    Route::post('/inventory/store', [DashboardController::class, 'storeMedicine'])->name('inventory.store');
-    Route::post('/notifications/update', [DashboardController::class, 'updateNotifications'])->name('notifications.update');
+    // Subscribed Pharmacists only (Dashboard & Inventory)
+    Route::middleware('subscribed')->group(function () {
+        // Dashboard Home (Dashboard Apoteker Branch)
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Data Stock & Reminder Branch
-    Route::get('/stock-reminder', [DashboardController::class, 'stockReminder'])->name('stock-reminder');
+        // Kelola Inventory Branch (Form & Notification Config)
+        Route::get('/inventory', [DashboardController::class, 'inventory'])->name('inventory');
+        Route::post('/inventory/store', [DashboardController::class, 'storeMedicine'])->name('inventory.store');
+        Route::post('/notifications/update', [DashboardController::class, 'updateNotifications'])->name('notifications.update');
 
-    // Medicine CRUD Edit & Update
-    Route::get('/medicines/{id}/edit', [MedicineController::class, 'edit'])->name('medicines.edit');
-    Route::put('/medicines/{id}', [MedicineController::class, 'update'])->name('medicines.update');
+        // Data Stock & Reminder Branch
+        Route::get('/stock-reminder', [DashboardController::class, 'stockReminder'])->name('stock-reminder');
 
-    // Dispense Medicine
-    Route::get('/inventory/{id}/dispense', [MedicineController::class, 'showDispenseForm'])->name('medicines.dispense');
-    Route::post('/inventory/{id}/dispense', [MedicineController::class, 'dispense'])->name('medicines.dispense.submit');
+        // Medicine CRUD Edit & Update
+        Route::get('/medicines/{id}/edit', [MedicineController::class, 'edit'])->name('medicines.edit');
+        Route::put('/medicines/{id}', [MedicineController::class, 'update'])->name('medicines.update');
 
-    // Audit Trail / Transaction Log
-    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+        // Dispense Medicine
+        Route::get('/inventory/{id}/dispense', [MedicineController::class, 'showDispenseForm'])->name('medicines.dispense');
+        Route::post('/inventory/{id}/dispense', [MedicineController::class, 'dispense'])->name('medicines.dispense.submit');
+
+        // Audit Trail / Transaction Log
+        Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+    });
+
+    // Admin Dashboard Flow (Superadmin Side)
+    Route::middleware('admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+        Route::post('/users/{id}/approve', [AdminController::class, 'approve'])->name('admin.users.approve');
+        Route::post('/users/{id}/reject', [AdminController::class, 'reject'])->name('admin.users.reject');
+        Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
+    });
 });

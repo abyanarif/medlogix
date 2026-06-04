@@ -19,7 +19,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Seed Pharmacist Users
+        // 1. Seed Admin User
+        User::create([
+            'name' => 'Admin MedLogix',
+            'username' => 'admin',
+            'email' => 'admin@medlogix.com',
+            'phone' => '08123456789',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Kantor Pusat MedLogix',
+            'password' => Hash::make('password123'),
+            'role' => 'admin',
+            'payment_status' => 'paid',
+        ]);
+
+        // 2. Seed Pharmacist Users
         $pharmacists = [
             [
                 'name' => 'Balya',
@@ -186,5 +199,8 @@ class DatabaseSeeder extends Seeder
             'jumlah_keluar' => 18,
             'tanggal_keluar' => '2026-05-22',
         ]);
+
+        // 4. Seed Default Settings
+        $this->call(SettingSeeder::class);
     }
 }
