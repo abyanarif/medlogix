@@ -16,9 +16,9 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <a href="{{ Auth::check() ? (auth()->user()->role === 'admin' ? route('admin.dashboard') : route('dashboard')) : route('login') }}" class="flex items-center space-x-2">
-                        <div class="text-2xl font-black tracking-tight text-teal-900 flex items-center gap-2">
-                            <i class="fas fa-pills text-teal-600 animate-bounce"></i> 
-                            <span>MedLogix</span>
+                        <div class="flex items-center">
+                            <img src="{{ asset('images/logo.png') }}" class="h-8 w-auto mr-2" alt="MedLogix Logo">
+                            <span class="text-xl font-bold text-teal-900">MedLogix</span>
                         </div>
                     </a>
                 </div>

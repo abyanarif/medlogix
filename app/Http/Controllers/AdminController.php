@@ -12,7 +12,7 @@ class AdminController extends Controller
     /**
      * Display the Admin Dashboard.
      */
-    public function index()
+    public function index(Request $request)
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
@@ -25,8 +25,22 @@ class AdminController extends Controller
             ->where('payment_status', 'pending')
             ->count();
 
-        // Fetch registered pharmacists
-        $users = User::where('role', 'pharmacist')->get();
+        // Fetch registered pharmacists with search and filter
+        $usersQuery = User::where('role', 'pharmacist');
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $usersQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', '%' . $search . '%')
+                      ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($request->filled('status')) {
+            $usersQuery->where('payment_status', $request->input('status'));
+        }
+
+        $users = $usersQuery->paginate(10)->withQueryString();
 
         return view('admin.dashboard', compact('totalRevenue', 'activePharmacies', 'pendingApprovals', 'users', 'settings'));
     }
@@ -43,9 +57,11 @@ class AdminController extends Controller
             'monthly_fee' => 'required|integer|min:0',
         ]);
 
-        foreach ($validated as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+            foreach ($validated as $key => $value) {
+                Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+            }
+        });
 
         return redirect()->back()->with('success', 'Pengaturan pembayaran B2B berhasil diperbarui.');
     }
@@ -56,6 +72,14 @@ class AdminController extends Controller
     public function approve($id)
     {
         $user = User::findOrFail($id);
+
+        // Delete receipt file if exists to save space
+        if ($user->payment_receipt) {
+            $oldPath = str_replace('storage/', '', $user->payment_receipt);
+            Storage::disk('public')->delete($oldPath);
+            $user->payment_receipt = null;
+        }
+
         $user->payment_status = 'paid';
         $user->subscription_ends_at = now()->addMonth(); // 1 month subscription
         $user->save();

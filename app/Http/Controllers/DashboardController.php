@@ -15,29 +15,29 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $medicines = Medicine::all()->map(function ($medicine) {
-            // Dynamically calculate the total volume of medicine dispensed
-            // Use Eloquent to query the MedicineOutflow model and SUM the jumlah_keluar for each specific medicine.
-            $medicine->obat_keluar = \App\Models\MedicineOutflow::where('medicine_id', $medicine->id)->sum('jumlah_keluar');
-            return $medicine;
-        });
+        // Scope medicines query to authenticated user and eager load the outflow sums with pagination
+        $medicines = Auth::user()->medicines()->withSum('outflows as obat_keluar', 'jumlah_keluar')->paginate(15);
 
         // Retrieve user notification settings for header alert counts
         $userNotification = Auth::user()->notification ?? new Notification();
 
-        // Calculate count of drugs requiring restocking
-        $alertCount = 0;
-        foreach ($medicines as $m) {
-            $isLowStock = $m->stok <= ($userNotification->batas_minimal_stok ?? 10);
-            $isNearExpiry = $m->remaining_days <= ($userNotification->waktu_restock_hari ?? 7);
-            $isExpired = $m->remaining_days <= 0;
+        // Calculate count of drugs requiring restocking across all records (not just the current paginated page)
+        $alertCount = Auth::user()->medicines()
+            ->get(['stok', 'exp_date'])
+            ->filter(function ($m) use ($userNotification) {
+                $isLowStock = $m->stok <= ($userNotification->batas_minimal_stok ?? 10);
+                $isNearExpiry = $m->remaining_days <= ($userNotification->waktu_restock_hari ?? 7);
+                $isExpired = $m->remaining_days <= 0;
+                return $isExpired || $isNearExpiry || $isLowStock;
+            })
+            ->count();
 
-            if ($isExpired || $isNearExpiry || $isLowStock) {
-                $alertCount++;
-            }
-        }
+        // Calculate total volume of medicine dispensed for overview stats
+        $totalDispensed = \App\Models\MedicineOutflow::whereHas('medicine', function ($query) {
+            $query->where('user_id', Auth::id());
+        })->sum('jumlah_keluar');
 
-        return view('welcome', compact('medicines', 'userNotification', 'alertCount'));
+        return view('welcome', compact('medicines', 'userNotification', 'alertCount', 'totalDispensed'));
     }
 
     /**
@@ -79,6 +79,9 @@ class DashboardController extends Controller
             $validated['informasi_general'] = 'Alert: ' . $validated['informasi_general'];
         }
 
+        // Securely assign the medicine to the authenticated user (tenant isolation)
+        $validated['user_id'] = Auth::id();
+
         Medicine::create($validated);
 
         return redirect()->route('inventory')->with('success', 'Obat baru berhasil ditambahkan ke inventory!');
@@ -116,7 +119,8 @@ class DashboardController extends Controller
      */
     public function stockReminder()
     {
-        $medicines = Medicine::all();
+        // Scope medicines to the authenticated user (tenant isolation)
+        $medicines = Auth::user()->medicines;
         $userNotification = Auth::user()->notification ?? new Notification([
             'batas_minimal_stok' => 10,
             'waktu_restock_hari' => 7,

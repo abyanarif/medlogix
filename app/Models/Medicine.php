@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['nama_obat', 'brand', 'informasi_general', 'alert_level', 'no_batch', 'exp_date', 'stok', 'harga', 'tanggal_masuk'])]
+#[Fillable(['user_id', 'nama_obat', 'brand', 'informasi_general', 'alert_level', 'no_batch', 'exp_date', 'stok', 'harga', 'tanggal_masuk'])]
 class Medicine extends Model
 {
     use HasFactory;
@@ -16,6 +16,14 @@ class Medicine extends Model
         'exp_date' => 'date',
         'tanggal_masuk' => 'date',
     ];
+
+    /**
+     * Get the user that owns the medicine.
+     */
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the outflows for this medicine.

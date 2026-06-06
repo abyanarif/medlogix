@@ -5,12 +5,12 @@
 @section('content')
 <div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8 transform transition hover:scale-[1.01] duration-300">
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-3xl mb-4">
-                <i class="fas fa-pills text-teal-600"></i>
+        <div class="flex flex-col items-center mb-8">
+            <div class="flex items-center mb-2">
+                <img src="{{ asset('images/logo.png') }}" class="h-8 w-auto mr-2" alt="MedLogix Logo">
+                <span class="text-xl font-bold text-teal-900">MedLogix</span>
             </div>
-            <h1 class="text-3xl font-extrabold text-teal-900">MedLogix</h1>
-            <p class="text-slate-600 mt-2 text-sm">Pharmacist Inventory Management System</p>
+            <p class="text-slate-600 text-sm text-center">Pharmacist Inventory Management System</p>
         </div>
 
         @if ($errors->any())

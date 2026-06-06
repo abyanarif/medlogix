@@ -80,6 +80,53 @@
         </div>
     </div>
 
+    <!-- Search and Filter Form -->
+    <div class="px-6 py-4 bg-slate-50/30 border-b border-slate-200">
+        <form method="GET" action="{{ route('admin.dashboard') }}">
+            <div class="flex flex-col md:flex-row md:items-center gap-4">
+                <!-- Search Input -->
+                <div class="flex-grow">
+                    <input 
+                        type="text" 
+                        name="search" 
+                        value="{{ request('search') }}" 
+                        placeholder="Cari nama atau email..." 
+                        class="w-full bg-white border border-slate-300 focus:ring-teal-500 focus:border-teal-500 text-slate-900 rounded-xl px-4 py-2.5 text-sm shadow-sm focus:outline-none transition duration-150"
+                    >
+                </div>
+
+                <!-- Status Filter -->
+                <div class="w-full md:w-48">
+                    <select 
+                        name="status" 
+                        class="w-full bg-white border border-slate-300 focus:ring-teal-500 focus:border-teal-500 text-slate-900 rounded-xl px-4 py-2.5 text-sm shadow-sm focus:outline-none transition duration-150"
+                    >
+                        <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>Semua Status</option>
+                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending Review</option>
+                        <option value="paid" {{ request('status') === 'paid' ? 'selected' : '' }}>Paid</option>
+                        <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-3 w-full md:w-auto">
+                    <button 
+                        type="submit" 
+                        class="w-full md:w-auto bg-teal-900 hover:bg-teal-800 text-white font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition duration-150 text-sm flex items-center justify-center gap-2"
+                    >
+                        <i class="fas fa-search text-xs"></i> Cari
+                    </button>
+                    <a 
+                        href="{{ route('admin.dashboard') }}" 
+                        class="w-full md:w-auto text-center text-slate-500 hover:text-slate-900 font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-100/85 transition duration-150 text-sm block border border-transparent hover:border-slate-200"
+                    >
+                        Reset Filter
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <!-- Responsive Table -->
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
@@ -187,6 +234,11 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- Pagination Links -->
+    <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+        {{ $users->links() }}
     </div>
 </div>
 

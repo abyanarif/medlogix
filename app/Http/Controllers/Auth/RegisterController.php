@@ -34,24 +34,28 @@ class RegisterController extends Controller
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Create the Pharmacist User
-        $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'sipa' => $validated['sipa'],
-            'apotek_address' => $validated['apotek_address'],
-            'password' => Hash::make($validated['password']),
-        ]);
+        // Wrap the creation of User and Notification inside a Database Transaction
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'username' => $validated['username'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'sipa' => $validated['sipa'],
+                'apotek_address' => $validated['apotek_address'],
+                'password' => Hash::make($validated['password']),
+            ]);
 
-        // Automatically initialize standard notification settings for the new user
-        Notification::create([
-            'user_id' => $user->id,
-            'batas_minimal_stok' => 10,
-            'waktu_restock_hari' => 7,
-            'is_active' => true,
-        ]);
+            // Automatically initialize standard notification settings for the new user
+            Notification::create([
+                'user_id' => $user->id,
+                'batas_minimal_stok' => 10,
+                'waktu_restock_hari' => 7,
+                'is_active' => true,
+            ]);
+
+            return $user;
+        });
 
         // Login user
         Auth::login($user);

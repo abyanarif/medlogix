@@ -14,7 +14,8 @@ class MedicineController extends Controller
      */
     public function edit($id)
     {
-        $medicine = Medicine::findOrFail($id);
+        // Scope lookup to user's medicines to prevent IDOR
+        $medicine = auth()->user()->medicines()->findOrFail($id);
         return view('medicines.edit', compact('medicine'));
     }
 
@@ -23,7 +24,8 @@ class MedicineController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $medicine = Medicine::findOrFail($id);
+        // Scope lookup to user's medicines to prevent IDOR
+        $medicine = auth()->user()->medicines()->findOrFail($id);
 
         $validated = $request->validate([
             'nama_obat' => 'required|string|max:255',
@@ -52,7 +54,8 @@ class MedicineController extends Controller
      */
     public function showDispenseForm($id)
     {
-        $medicine = Medicine::findOrFail($id);
+        // Scope lookup to user's medicines to prevent IDOR
+        $medicine = auth()->user()->medicines()->findOrFail($id);
         return view('medicines.dispense', compact('medicine'));
     }
 
@@ -61,7 +64,8 @@ class MedicineController extends Controller
      */
     public function dispense(Request $request, $id)
     {
-        $medicine = Medicine::findOrFail($id);
+        // Scope lookup to user's medicines to prevent IDOR
+        $medicine = auth()->user()->medicines()->findOrFail($id);
 
         $request->validate([
             'jumlah_keluar' => 'required|integer|min:1|max:' . $medicine->stok,

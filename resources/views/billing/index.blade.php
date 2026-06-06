@@ -13,7 +13,7 @@
             <span class="bg-teal-700/50 text-teal-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-teal-600/30">
                 MedLogix Premium
             </span>
-            <h1 class="text-3xl font-black mt-2">Aktivasi Langganan B2B SaaS</h1>
+            <h1 class="text-3xl font-black mt-2">Aktivasi Langganan MedLogix</h1>
             <p class="text-teal-100/90 text-sm mt-1">
                 Lakukan transfer pembayaran untuk mengaktifkan seluruh fitur inventory apotek premium Anda.
             </p>

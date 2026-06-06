@@ -13,11 +13,18 @@ class LogController extends Controller
      */
     public function index()
     {
-        // Fetch all inflow entries (medicines coming IN), ordered by tanggal_masuk descending
-        $inflows = Medicine::orderBy('tanggal_masuk', 'desc')->get();
+        // Scope inflows (medicines coming IN) to the authenticated user, paginated (15 per page)
+        $inflows = Medicine::where('user_id', auth()->id())
+            ->orderBy('tanggal_masuk', 'desc')
+            ->paginate(15, ['*'], 'inflows_page');
 
-        // Fetch all outflow entries (medicines going OUT), eagers loading relation, ordered by tanggal_keluar descending
-        $outflows = MedicineOutflow::with('medicine')->orderBy('tanggal_keluar', 'desc')->get();
+        // Scope outflows (medicines going OUT) to the authenticated user, eager loading relations, paginated (15 per page)
+        $outflows = MedicineOutflow::whereHas('medicine', function ($query) {
+                $query->where('user_id', auth()->id());
+            })
+            ->with('medicine')
+            ->orderBy('tanggal_keluar', 'desc')
+            ->paginate(15, ['*'], 'outflows_page');
 
         return view('logs.index', compact('inflows', 'outflows'));
     }

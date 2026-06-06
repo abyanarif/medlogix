@@ -252,4 +252,81 @@ class SubscriptionBillingTest extends TestCase
             'value' => '75000',
         ]);
     }
+
+    /**
+     * Test admin can search pharmacists by name or email.
+     */
+    public function test_admin_can_search_pharmacists(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist1 = User::factory()->create([
+            'name' => 'Alice B2B',
+            'email' => 'alice@medlogix.test',
+            'role' => 'pharmacist',
+            'sipa' => 'SIPA-111',
+        ]);
+
+        $pharmacist2 = User::factory()->create([
+            'name' => 'Bob B2B',
+            'email' => 'bob@medlogix.test',
+            'role' => 'pharmacist',
+            'sipa' => 'SIPA-222',
+        ]);
+
+        // Search by name
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['search' => 'Alice']));
+        $response->assertStatus(200);
+        $response->assertSee('Alice B2B');
+        $response->assertDontSee('Bob B2B');
+
+        // Search by email
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['search' => 'bob@']));
+        $response->assertStatus(200);
+        $response->assertSee('Bob B2B');
+        $response->assertDontSee('Alice B2B');
+    }
+
+    /**
+     * Test admin can filter pharmacists by payment status.
+     */
+    public function test_admin_can_filter_pharmacists_by_payment_status(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $paidPharmacist = User::factory()->create([
+            'name' => 'Paid Pharmacist',
+            'role' => 'pharmacist',
+            'payment_status' => 'paid',
+            'sipa' => 'SIPA-PAID',
+        ]);
+
+        $pendingPharmacist = User::factory()->create([
+            'name' => 'Pending Pharmacist',
+            'role' => 'pharmacist',
+            'payment_status' => 'pending',
+            'sipa' => 'SIPA-PENDING',
+        ]);
+
+        // Filter by paid
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['status' => 'paid']));
+        $response->assertStatus(200);
+        $response->assertSee('Paid Pharmacist');
+        $response->assertDontSee('Pending Pharmacist');
+
+        // Filter by pending
+        $response = $this->actingAs($admin)->get(route('admin.dashboard', ['status' => 'pending']));
+        $response->assertStatus(200);
+        $response->assertSee('Pending Pharmacist');
+        $response->assertDontSee('Paid Pharmacist');
+    }
 }
+

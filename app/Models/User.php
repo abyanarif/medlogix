@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'username', 'email', 'phone', 'sipa', 'apotek_address', 'password', 'role', 'payment_status', 'payment_receipt', 'subscription_ends_at'])]
+#[Fillable(['name', 'username', 'email', 'phone', 'sipa', 'apotek_address', 'password', 'payment_receipt'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -38,6 +38,14 @@ class User extends Authenticatable
     public function notification(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Notification::class);
+    }
+
+    /**
+     * Get the medicines for the user.
+     */
+    public function medicines(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Medicine::class);
     }
 }
 

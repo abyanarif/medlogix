@@ -47,7 +47,7 @@
                 <p class="text-xs text-slate-600 mt-1">Daftar pencatatan obat baru yang masuk ke database inventory apotek.</p>
             </div>
             <span class="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-xl">
-                Total Mutasi: {{ $inflows->count() }} Record
+                Total Mutasi: {{ $inflows->total() }} Record
             </span>
         </div>
 
@@ -106,6 +106,10 @@
                 </tbody>
             </table>
         </div>
+        <!-- Pagination Links for Inflows -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            {{ $inflows->appends(['activeTab' => 'inflow'])->links() }}
+        </div>
     </div>
 
     <!-- Tab 2 Content: Riwayat Obat Keluar (Outflow Table) -->
@@ -118,7 +122,7 @@
                 <p class="text-xs text-slate-600 mt-1">Daftar transaksi pengeluaran (dispensing) obat keluar dari apotek.</p>
             </div>
             <span class="bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold px-3 py-1.5 rounded-xl">
-                Total Mutasi: {{ $outflows->count() }} Record
+                Total Mutasi: {{ $outflows->total() }} Record
             </span>
         </div>
 
@@ -172,6 +176,10 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <!-- Pagination Links for Outflows -->
+        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            {{ $outflows->appends(['activeTab' => 'outflow'])->links() }}
         </div>
     </div>
 </div>

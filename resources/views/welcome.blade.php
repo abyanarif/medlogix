@@ -40,7 +40,7 @@
         </div>
         <div>
             <p class="text-slate-600 text-xs font-bold uppercase tracking-wider">Total Jenis Obat</p>
-            <h3 class="text-2xl font-black text-slate-900 mt-0.5">{{ $medicines->count() }}</h3>
+            <h3 class="text-2xl font-black text-slate-900 mt-0.5">{{ $medicines->total() }}</h3>
         </div>
     </div>
 
@@ -51,7 +51,7 @@
         </div>
         <div>
             <p class="text-slate-600 text-xs font-bold uppercase tracking-wider">Simulasi Obat Keluar</p>
-            <h3 class="text-2xl font-black text-slate-900 mt-0.5">{{ $medicines->sum('obat_keluar') }} <span class="text-xs text-slate-600 font-medium">butir</span></h3>
+            <h3 class="text-2xl font-black text-slate-900 mt-0.5">{{ $totalDispensed }} <span class="text-xs text-slate-600 font-medium">butir</span></h3>
         </div>
     </div>
 
@@ -153,6 +153,10 @@
                 @endforeach
             </tbody>
         </table>
+    </div>
+    <!-- Pagination Links -->
+    <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+        {{ $medicines->links() }}
     </div>
 </div>
 @endsection
