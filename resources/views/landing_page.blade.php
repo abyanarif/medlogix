@@ -194,7 +194,7 @@
 <div class="relative flex justify-center lg:justify-end">
 <!-- Hero Image with overlay -->
 <div class="relative w-full max-w-[540px] aspect-[4/5] rounded-3xl shadow-2xl">
-<img class="w-full h-full object-cover" data-alt="A professional female pharmacist smiling in a modern bright pharmacy, holding a digital tablet displaying inventory medical dashboard. The lighting is crisp and sterile yet inviting, with white shelves of medicine blurred in the background. The aesthetic is clean, professional, and corporate pharmaceutical SaaS oriented with teal and white accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvYHOnYnaN5ey5qnz4zPRXxycQDEjO2VTWEEPf9XXIzJhYlEj_2njbRj-1gj6y1J3J9WQti5bm6ICXJSk76V5-heERPuI_tguUzqVcRDRDnyP2aZ940CPLAQ6AMCdCqYwqcxNYdu65yxXg7LFBbhGby1A2_9t-MQCd3jNroHhda-IQ3GulkTQ2vmxQtRJhHkRarnwh2jTZc-IpAR-bzPpNNMTmMDsRhYrXQ7sBk7tH5N8BTJz6GVID87iH-u0RzjQPxKV_YDl90qE">
+<img class="w-full h-full object-cover" data-alt="..." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHJDD5p_tru1OlTb2iQySwzTXZzzfiJ5NdsfeVPhr2eMh6auXgguXznhM1eKmZ2x8Sx7X8sUMt4C_wYOIcKuymMemUloQNKzLTuSFaD-JFwle1ApaGsE5wjKBSnRYIhFg8VpqmKdWEEAAIHG0JIRPZpxvgZWdvzKrCxSWIk5rAUWQiqeVcfVnMY7Vb-HUgNW4xTXiYJEqJ8b-6CvbYkg3UZgKI4qrnve-Sn3HSmGRZggYvBXG2U9TYoiVnuP_yNgf2CarweGoWKBAD">
 <!-- Floating Glassmorphism Card -->
 <div class="absolute bottom-12 -left-8 md:-left-12 glass-card p-6 rounded-xl shadow-xl w-[280px] border-l-4 border-error animate-pulse-subtle z-20 z-50">
 <div class="flex items-start gap-3 mb-4">
