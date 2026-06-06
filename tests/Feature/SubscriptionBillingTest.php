@@ -328,5 +328,191 @@ class SubscriptionBillingTest extends TestCase
         $response->assertSee('Pending Pharmacist');
         $response->assertDontSee('Paid Pharmacist');
     }
+
+    /**
+     * Test registration starts 7-day trial.
+     */
+    public function test_registration_starts_7_day_trial(): void
+    {
+        $response = $this->post(route('register.submit'), [
+            'name' => 'Apoteker Trial',
+            'username' => 'apotekertrial',
+            'email' => 'trial@medlogix.test',
+            'phone' => '081234567890',
+            'sipa' => 'SIPA-TRIAL-123',
+            'apotek_address' => 'Apotek Trial Sentosa',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+
+        $user = User::where('email', 'trial@medlogix.test')->first();
+        $this->assertNotNull($user);
+        $this->assertEquals('paid', $user->payment_status);
+        $this->assertEquals('trial', $user->subscription_plan);
+        $this->assertEquals(50, $user->max_slots);
+        $this->assertFalse($user->yearly_bonus_claimed);
+        $this->assertNotNull($user->subscription_ends_at);
+        $this->assertTrue($user->subscription_ends_at->isFuture());
+    }
+
+    /**
+     * Test pharmacist can upload receipt with plan and addon_qty.
+     */
+    public function test_pharmacist_can_upload_receipt_with_plan_and_addons(): void
+    {
+        Storage::fake('public');
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'pending',
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $file = UploadedFile::fake()->image('receipt.jpg');
+
+        $response = $this->actingAs($pharmacist)->post(route('billing.upload'), [
+            'payment_receipt' => $file,
+            'pending_plan' => 'yearly',
+            'pending_addon_qty' => 20,
+        ]);
+
+        $response->assertRedirect(route('billing.index'));
+        $pharmacist = $pharmacist->fresh();
+        $this->assertEquals('pending', $pharmacist->payment_status);
+        $this->assertEquals('yearly', $pharmacist->pending_plan);
+        $this->assertEquals(20, $pharmacist->pending_addon_qty);
+        $this->assertNotNull($pharmacist->payment_receipt);
+    }
+
+    /**
+     * Test admin approval logic for monthly plan and addon slots.
+     */
+    public function test_admin_approves_monthly_plan_and_addons(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'pending',
+            'payment_receipt' => 'storage/receipts/test.jpg',
+            'pending_plan' => 'monthly',
+            'pending_addon_qty' => 10,
+            'max_slots' => 50,
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.users.approve', $pharmacist->id));
+
+        $response->assertRedirect();
+        
+        $pharmacist = $pharmacist->fresh();
+        $this->assertEquals('paid', $pharmacist->payment_status);
+        $this->assertEquals('monthly', $pharmacist->subscription_plan);
+        $this->assertEquals(60, $pharmacist->max_slots); // 50 + 10 addon
+        $this->assertNull($pharmacist->pending_plan);
+        $this->assertEquals(0, $pharmacist->pending_addon_qty);
+        $this->assertNotNull($pharmacist->subscription_ends_at);
+        $this->assertTrue($pharmacist->subscription_ends_at->isFuture());
+    }
+
+    /**
+     * Test admin approval logic for yearly plan with first-time bonus slots.
+     */
+    public function test_admin_approves_yearly_plan_with_first_time_bonus(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'pending',
+            'payment_receipt' => 'storage/receipts/test.jpg',
+            'pending_plan' => 'yearly',
+            'pending_addon_qty' => 0,
+            'max_slots' => 50,
+            'yearly_bonus_claimed' => false,
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.users.approve', $pharmacist->id));
+
+        $response->assertRedirect();
+
+        $pharmacist = $pharmacist->fresh();
+        $this->assertEquals('paid', $pharmacist->payment_status);
+        $this->assertEquals('yearly', $pharmacist->subscription_plan);
+        $this->assertEquals(100, $pharmacist->max_slots); // 50 + 50 bonus
+        $this->assertTrue($pharmacist->yearly_bonus_claimed);
+        $this->assertNull($pharmacist->pending_plan);
+    }
+
+    /**
+     * Test slot limit enforcement.
+     */
+    public function test_slot_limit_enforcement(): void
+    {
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'paid',
+            'subscription_ends_at' => now()->addMonth(),
+            'max_slots' => 2,
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        // Create 2 medicines
+        \App\Models\Medicine::create([
+            'nama_obat' => 'Obat A',
+            'brand' => 'Brand A',
+            'tanggal_masuk' => '2026-06-06',
+            'no_batch' => 'BATCH-A',
+            'stok' => 10,
+            'exp_date' => '2027-06-06',
+            'harga' => 1000,
+            'informasi_general' => 'Alert: Info A',
+            'alert_level' => 'info',
+            'user_id' => $pharmacist->id,
+        ]);
+
+        \App\Models\Medicine::create([
+            'nama_obat' => 'Obat B',
+            'brand' => 'Brand B',
+            'tanggal_masuk' => '2026-06-06',
+            'no_batch' => 'BATCH-B',
+            'stok' => 10,
+            'exp_date' => '2027-06-06',
+            'harga' => 1000,
+            'informasi_general' => 'Alert: Info B',
+            'alert_level' => 'info',
+            'user_id' => $pharmacist->id,
+        ]);
+
+        // Attempt to create 3rd medicine
+        $response = $this->actingAs($pharmacist)->post(route('inventory.store'), [
+            'nama_obat' => 'Obat C',
+            'brand' => 'Brand C',
+            'tanggal_masuk' => '2026-06-06',
+            'no_batch' => 'BATCH-C',
+            'stok' => 10,
+            'exp_date' => '2027-06-06',
+            'harga' => 1000,
+            'informasi_general' => 'Info C',
+            'alert_level' => 'info',
+        ]);
+
+        $response->assertStatus(403);
+    }
 }
 

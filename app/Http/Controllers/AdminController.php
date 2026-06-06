@@ -16,6 +16,11 @@ class AdminController extends Controller
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
+        // Fill dynamic pricing defaults if not set in database
+        $settings['price_monthly'] = (int)($settings['price_monthly'] ?? 30000);
+        $settings['price_yearly'] = (int)($settings['price_yearly'] ?? 300000);
+        $settings['price_addon_slot'] = (int)($settings['price_addon_slot'] ?? 30000);
+
         $paidUsersCount = User::where('role', 'pharmacist')->where('payment_status', 'paid')->count();
         $monthlyFee = (int)($settings['monthly_fee'] ?? 50000);
         $totalRevenue = $paidUsersCount * $monthlyFee;
@@ -55,11 +60,16 @@ class AdminController extends Controller
             'account_number' => 'required|string|max:100',
             'account_name' => 'required|string|max:255',
             'monthly_fee' => 'required|integer|min:0',
+            'price_monthly' => 'nullable|integer|min:0',
+            'price_yearly' => 'nullable|integer|min:0',
+            'price_addon_slot' => 'nullable|integer|min:0',
         ]);
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
             foreach ($validated as $key => $value) {
-                Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+                if ($value !== null) {
+                    Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+                }
             }
         });
 
@@ -73,16 +83,53 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Delete receipt file if exists to save space
-        if ($user->payment_receipt) {
-            $oldPath = str_replace('storage/', '', $user->payment_receipt);
-            Storage::disk('public')->delete($oldPath);
-            $user->payment_receipt = null;
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+            // Delete receipt file if exists to save space
+            if ($user->payment_receipt) {
+                $oldPath = str_replace('storage/', '', $user->payment_receipt);
+                Storage::disk('public')->delete($oldPath);
+                $user->payment_receipt = null;
+            }
 
-        $user->payment_status = 'paid';
-        $user->subscription_ends_at = now()->addMonth(); // 1 month subscription
-        $user->save();
+            $user->payment_status = 'paid';
+
+            $plan = $user->pending_plan ?? 'monthly';
+            $addonQty = (int)$user->pending_addon_qty;
+
+            if ($plan === 'monthly') {
+                $currentEnd = $user->subscription_ends_at;
+                if (!$currentEnd || $currentEnd->isPast()) {
+                    $user->subscription_ends_at = now()->addMonth();
+                } else {
+                    $user->subscription_ends_at = $currentEnd->addMonth();
+                }
+                $user->subscription_plan = 'monthly';
+            } elseif ($plan === 'yearly') {
+                $currentEnd = $user->subscription_ends_at;
+                if (!$currentEnd || $currentEnd->isPast()) {
+                    $user->subscription_ends_at = now()->addYear();
+                } else {
+                    $user->subscription_ends_at = $currentEnd->addYear();
+                }
+                $user->subscription_plan = 'yearly';
+
+                // Bonus Logic: If yearly_bonus_claimed is false, add 50 to max_slots and set yearly_bonus_claimed = true.
+                if (!$user->yearly_bonus_claimed) {
+                    $user->max_slots = ($user->max_slots ?? 50) + 50;
+                    $user->yearly_bonus_claimed = true;
+                }
+            }
+
+            // If they bought Add-on slots: Add the approved addon_qty to the user's max_slots.
+            if ($addonQty > 0) {
+                $user->max_slots = ($user->max_slots ?? 50) + $addonQty;
+            }
+
+            // Reset pending request details
+            $user->pending_plan = null;
+            $user->pending_addon_qty = 0;
+            $user->save();
+        });
 
         return redirect()->back()->with('success', "Pembayaran untuk apoteker {$user->name} berhasil disetujui.");
     }
@@ -94,15 +141,19 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        // Delete receipt file if exists to save space
-        if ($user->payment_receipt) {
-            $oldPath = str_replace('storage/', '', $user->payment_receipt);
-            Storage::disk('public')->delete($oldPath);
-            $user->payment_receipt = null;
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user) {
+            // Delete receipt file if exists to save space
+            if ($user->payment_receipt) {
+                $oldPath = str_replace('storage/', '', $user->payment_receipt);
+                Storage::disk('public')->delete($oldPath);
+                $user->payment_receipt = null;
+            }
 
-        $user->payment_status = 'rejected';
-        $user->save();
+            $user->payment_status = 'rejected';
+            $user->pending_plan = null;
+            $user->pending_addon_qty = 0;
+            $user->save();
+        });
 
         return redirect()->back()->with('success', "Pembayaran untuk apoteker {$user->name} telah ditolak.");
     }

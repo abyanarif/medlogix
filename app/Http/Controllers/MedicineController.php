@@ -92,4 +92,36 @@ class MedicineController extends Controller
 
         return redirect()->route('stock-reminder')->with('success', 'Pengeluaran obat "' . $medicine->nama_obat . '" sebanyak ' . $jumlahKeluar . ' pcs berhasil dicatat!');
     }
+
+    /**
+     * Store a new medicine record.
+     */
+    public function store(Request $request)
+    {
+        if (auth()->user()->medicines()->count() >= (auth()->user()->max_slots ?? 50)) {
+            abort(403, 'Kapasitas slot obat Anda sudah penuh. Silakan upgrade langganan atau beli ekstra slot di halaman tagihan.');
+        }
+
+        $validated = $request->validate([
+            'nama_obat' => 'required|string|max:255',
+            'brand' => 'required|string|max:255',
+            'tanggal_masuk' => 'required|date',
+            'no_batch' => 'required|string|max:100',
+            'stok' => 'required|integer|min:0',
+            'exp_date' => 'required|date',
+            'harga' => 'required|integer|min:0',
+            'informasi_general' => 'required|string',
+            'alert_level' => 'required|in:danger,warning,info',
+        ]);
+
+        if (!str_starts_with($validated['informasi_general'], 'Alert:')) {
+            $validated['informasi_general'] = 'Alert: ' . $validated['informasi_general'];
+        }
+
+        $validated['user_id'] = auth()->id();
+
+        $medicine = Medicine::create($validated);
+
+        return redirect()->route('inventory')->with('success', 'Obat baru berhasil ditambahkan ke inventory!');
+    }
 }

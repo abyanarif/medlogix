@@ -10,9 +10,28 @@
     </div>
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
         <div>
-            <span class="bg-teal-700/50 text-teal-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-teal-600/30">
-                <i class="fas fa-check-circle mr-1"></i> Apoteker Terverifikasi
-            </span>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="bg-teal-700/50 text-teal-100 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border border-teal-600/30">
+                    <i class="fas fa-check-circle mr-1"></i> Apoteker Terverifikasi
+                </span>
+                
+                @if (auth()->user()->subscription_plan === 'trial')
+                    @php
+                        $daysLeft = auth()->user()->subscription_ends_at ? max(0, now()->startOfDay()->diffInDays(Carbon\Carbon::parse(auth()->user()->subscription_ends_at)->startOfDay(), false)) : 0;
+                    @endphp
+                    <span class="bg-amber-400 text-slate-950 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 border border-amber-300/40">
+                        <i class="fas fa-hourglass-half"></i> Trial Berakhir dalam {{ $daysLeft }} Hari
+                    </span>
+                @elseif (auth()->user()->subscription_plan === 'monthly')
+                    <span class="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 border border-emerald-400/40">
+                        <i class="fas fa-crown text-amber-300"></i> Paket: Bulanan
+                    </span>
+                @elseif (auth()->user()->subscription_plan === 'yearly')
+                    <span class="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1 border border-emerald-400/40">
+                        <i class="fas fa-crown text-amber-300"></i> Paket: Tahunan
+                    </span>
+                @endif
+            </div>
             <h1 class="text-3xl font-black mt-2">Apotek Apoteker {{ Auth::user()->name }}</h1>
             <p class="text-teal-100/90 text-sm mt-1 flex flex-wrap items-center gap-4">
                 <span><i class="fas fa-id-card mr-1 text-teal-300"></i> SIPA: <strong class="text-white">{{ Auth::user()->sipa }}</strong></span>
@@ -66,6 +85,51 @@
                 Stok &le; {{ $userNotification->batas_minimal_stok ?? 10 }}
             </h3>
         </div>
+    </div>
+</div>
+
+<!-- Slot Capacity Card -->
+<div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm mb-8">
+    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-150 text-teal-900 flex items-center justify-center text-3xl">
+                <i class="fas fa-cubes-stacked text-teal-850"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-slate-900">Kapasitas Slot Obat</h3>
+                <p class="text-slate-550 text-xs mt-0.5">Pantau dan kelola batas penyimpanan jenis obat apotek Anda.</p>
+            </div>
+        </div>
+        <div class="flex flex-col sm:items-end gap-2">
+            <span class="text-xl font-black text-slate-900">
+                {{ auth()->user()->medicines()->count() }} <span class="text-slate-400 font-semibold text-sm">/ {{ auth()->user()->max_slots ?? 50 }} Slot Terpakai</span>
+            </span>
+            <a href="{{ route('billing.index') }}" class="bg-teal-700 hover:bg-teal-800 text-white font-bold px-4 py-2 rounded-xl transition shadow-sm hover:shadow text-xs flex items-center justify-center gap-1.5">
+                <i class="fas fa-credit-card"></i> Upgrade &amp; Tambah Slot
+            </a>
+        </div>
+    </div>
+    
+    <!-- Progress Bar -->
+    @php
+        $count = auth()->user()->medicines()->count();
+        $max = auth()->user()->max_slots ?? 50;
+        $percentage = min(100, round(($count / $max) * 100));
+        $barColor = $percentage >= 90 ? 'bg-red-500' : ($percentage >= 75 ? 'bg-amber-500' : 'bg-teal-600');
+    @endphp
+    <div class="mt-6">
+        <div class="flex justify-between text-[11px] font-bold text-slate-650 mb-1.5 uppercase tracking-wider">
+            <span>Status Penyimpanan</span>
+            <span class="font-mono">{{ $percentage }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-3 border border-slate-200 overflow-hidden p-0.5">
+            <div class="{{ $barColor }} h-2 rounded-full transition-all duration-500" style="width: {{ $percentage }}%"></div>
+        </div>
+        @if ($percentage >= 90)
+            <p class="text-[10px] text-red-600 font-bold mt-2 flex items-center gap-1">
+                <i class="fas fa-triangle-exclamation animate-bounce"></i> Slot penyimpanan hampir penuh. Silakan lakukan upgrade atau beli slot ekstra!
+            </p>
+        @endif
     </div>
 </div>
 

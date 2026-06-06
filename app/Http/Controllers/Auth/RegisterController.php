@@ -44,6 +44,10 @@ class RegisterController extends Controller
                 'sipa' => $validated['sipa'],
                 'apotek_address' => $validated['apotek_address'],
                 'password' => Hash::make($validated['password']),
+                'subscription_ends_at' => now()->addDays(7),
+                'payment_status' => 'paid',
+                'subscription_plan' => 'trial',
+                'max_slots' => 50,
             ]);
 
             // Automatically initialize standard notification settings for the new user

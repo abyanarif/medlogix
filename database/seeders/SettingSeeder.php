@@ -18,5 +18,8 @@ class SettingSeeder extends Seeder
         Setting::updateOrCreate(['key' => 'account_number'], ['value' => '12345678']);
         Setting::updateOrCreate(['key' => 'account_name'], ['value' => 'MedLogix']);
         Setting::updateOrCreate(['key' => 'monthly_fee'], ['value' => '50000']);
+        Setting::updateOrCreate(['key' => 'price_monthly'], ['value' => '30000']);
+        Setting::updateOrCreate(['key' => 'price_yearly'], ['value' => '300000']);
+        Setting::updateOrCreate(['key' => 'price_addon_slot'], ['value' => '30000']);
     }
 }

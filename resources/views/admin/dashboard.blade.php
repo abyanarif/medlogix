@@ -148,6 +148,16 @@
                             <div class="text-xs text-slate-650 mt-0.5 flex items-center gap-1">
                                 <i class="fas fa-id-card text-[10px] text-teal-700"></i> SIPA: {{ $user->sipa }}
                             </div>
+                            <!-- Subscription Plan Details -->
+                            <div class="mt-2 text-[11px] text-slate-500 flex flex-col gap-0.5">
+                                <div>Plan Aktif: <span class="font-bold text-teal-850 capitalize">{{ $user->subscription_plan ?? 'Trial' }}</span></div>
+                                <div>Slot Obat: <span class="font-bold text-slate-850">{{ $user->max_slots ?? 50 }} Slot</span></div>
+                                @if($user->yearly_bonus_claimed)
+                                    <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-0.5">
+                                        <i class="fas fa-gift"></i> Bonus Tahunan Diklaim
+                                    </div>
+                                @endif
+                            </div>
                         </td>
 
                         <!-- Email & Phone -->
@@ -178,6 +188,18 @@
                                 <span class="w-1.5 h-1.5 rounded-full {{ $user->payment_status === 'paid' ? 'bg-emerald-500' : ($user->payment_status === 'pending' ? 'bg-amber-500 animate-pulse' : 'bg-red-500') }}"></span>
                                 {{ $statusLabel }}
                             </span>
+
+                            @if($user->payment_status === 'pending' && $user->pending_plan)
+                                <div class="mt-2 text-[10px] bg-slate-50 border border-slate-200 text-slate-700 rounded-lg p-1.5 text-left inline-block max-w-[160px]">
+                                    <div class="font-bold text-teal-800 mb-0.5"><i class="fas fa-shopping-cart text-[9px]"></i> Rincian Beli:</div>
+                                    <div class="space-y-0.5 text-slate-650">
+                                        <div>Paket: <span class="font-bold capitalize">{{ $user->pending_plan === 'monthly' ? 'Bulanan' : 'Tahunan' }}</span></div>
+                                        @if($user->pending_addon_qty > 0)
+                                            <div>Ekstra: <span class="font-bold">+{{ $user->pending_addon_qty }} Slot</span></div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
                         </td>
 
                         <!-- Payment Receipt -->
@@ -303,7 +325,7 @@
 
                 <!-- Nominal Biaya Langganan -->
                 <div>
-                    <label for="monthly_fee" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Nominal Biaya Bulanan (Rupiah)</label>
+                    <label for="monthly_fee" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Nominal Biaya Bulanan Lama (Rupiah)</label>
                     <input 
                         id="monthly_fee" 
                         type="number" 
@@ -311,8 +333,56 @@
                         value="{{ old('monthly_fee', $settings['monthly_fee'] ?? '') }}"
                         required
                         min="0"
-                        class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold"
+                        class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold text-slate-500"
                         placeholder="Contoh: 50000"
+                    >
+                </div>
+            </div>
+
+            <!-- Dynamic Pricing Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <!-- price_monthly -->
+                <div>
+                    <label for="price_monthly" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Biaya Paket Bulanan (Rupiah)</label>
+                    <input 
+                        id="price_monthly" 
+                        type="number" 
+                        name="price_monthly" 
+                        value="{{ old('price_monthly', $settings['price_monthly'] ?? '30000') }}"
+                        required
+                        min="0"
+                        class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold"
+                        placeholder="Contoh: 30000"
+                    >
+                </div>
+
+                <!-- price_yearly -->
+                <div>
+                    <label for="price_yearly" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Biaya Paket Tahunan (Rupiah)</label>
+                    <input 
+                        id="price_yearly" 
+                        type="number" 
+                        name="price_yearly" 
+                        value="{{ old('price_yearly', $settings['price_yearly'] ?? '300000') }}"
+                        required
+                        min="0"
+                        class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold"
+                        placeholder="Contoh: 300000"
+                    >
+                </div>
+
+                <!-- price_addon_slot -->
+                <div>
+                    <label for="price_addon_slot" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Biaya Ekstra 10 Slot (Rupiah)</label>
+                    <input 
+                        id="price_addon_slot" 
+                        type="number" 
+                        name="price_addon_slot" 
+                        value="{{ old('price_addon_slot', $settings['price_addon_slot'] ?? '30000') }}"
+                        required
+                        min="0"
+                        class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold"
+                        placeholder="Contoh: 30000"
                     >
                 </div>
             </div>

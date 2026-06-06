@@ -26,6 +26,8 @@ class BillingController extends Controller
     {
         $request->validate([
             'payment_receipt' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'pending_plan' => 'nullable|string|in:monthly,yearly',
+            'pending_addon_qty' => 'nullable|integer|min:0',
         ]);
 
         $user = auth()->user();
@@ -40,6 +42,8 @@ class BillingController extends Controller
         $path = $request->file('payment_receipt')->store('receipts', 'public');
         $user->payment_receipt = 'storage/' . $path;
         $user->payment_status = 'pending';
+        $user->pending_plan = $request->input('pending_plan', 'monthly');
+        $user->pending_addon_qty = (int) $request->input('pending_addon_qty', 0);
         $user->save();
 
         return redirect()->route('billing.index')->with('success', 'Bukti transfer berhasil diunggah. Menunggu verifikasi admin.');

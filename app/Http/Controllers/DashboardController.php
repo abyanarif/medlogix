@@ -62,6 +62,10 @@ class DashboardController extends Controller
      */
     public function storeMedicine(Request $request)
     {
+        if (auth()->user()->medicines()->count() >= (auth()->user()->max_slots ?? 50)) {
+            abort(403, 'Kapasitas slot obat Anda sudah penuh. Silakan upgrade langganan atau beli ekstra slot di halaman tagihan.');
+        }
+
         $validated = $request->validate([
             'nama_obat' => 'required|string|max:255',
             'brand' => 'required|string|max:255',
