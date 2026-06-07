@@ -14,21 +14,42 @@ class AdminController extends Controller
      */
     public function index(Request $request)
     {
-        $settings = Setting::pluck('value', 'key')->toArray();
+        // Only retrieve active pricing keys
+        $settings = Setting::whereIn('key', ['price_monthly', 'price_yearly', 'price_addon_slot'])
+            ->pluck('value', 'key')
+            ->toArray();
 
         // Fill dynamic pricing defaults if not set in database
         $settings['price_monthly'] = (int)($settings['price_monthly'] ?? 30000);
         $settings['price_yearly'] = (int)($settings['price_yearly'] ?? 300000);
         $settings['price_addon_slot'] = (int)($settings['price_addon_slot'] ?? 30000);
 
-        $paidUsersCount = User::where('role', 'pharmacist')->where('payment_status', 'paid')->count();
-        $monthlyFee = (int)($settings['monthly_fee'] ?? 50000);
-        $totalRevenue = $paidUsersCount * $monthlyFee;
-        $activePharmacies = $paidUsersCount;
+        $priceMonthly = $settings['price_monthly'];
+        $priceYearly = $settings['price_yearly'];
+
+        $usersMonthlyCount = User::where('role', 'pharmacist')
+            ->where('payment_status', 'paid')
+            ->where('subscription_plan', 'monthly')
+            ->count();
+        $usersYearlyCount = User::where('role', 'pharmacist')
+            ->where('payment_status', 'paid')
+            ->where('subscription_plan', 'yearly')
+            ->count();
+
+        $totalRevenue = ($usersMonthlyCount * $priceMonthly) + ($usersYearlyCount * $priceYearly);
+        
+        $activePharmacies = User::where('role', 'pharmacist')
+            ->where('payment_status', 'paid')
+            ->count();
+
         $pendingApprovals = User::where('role', 'pharmacist')
             ->whereNotNull('payment_receipt')
             ->where('payment_status', 'pending')
             ->count();
+
+        // Fetch bank name and account number separately to pass to view
+        $bankName = Setting::where('key', 'bank_name')->value('value') ?? '';
+        $accountNumber = Setting::where('key', 'account_number')->value('value') ?? '';
 
         // Fetch registered pharmacists with search and filter
         $usersQuery = User::where('role', 'pharmacist');
@@ -47,7 +68,7 @@ class AdminController extends Controller
 
         $users = $usersQuery->paginate(10)->withQueryString();
 
-        return view('admin.dashboard', compact('totalRevenue', 'activePharmacies', 'pendingApprovals', 'users', 'settings'));
+        return view('admin.dashboard', compact('totalRevenue', 'activePharmacies', 'pendingApprovals', 'users', 'settings', 'bankName', 'accountNumber'));
     }
 
     /**
@@ -58,8 +79,8 @@ class AdminController extends Controller
         $validated = $request->validate([
             'bank_name' => 'required|string|max:255',
             'account_number' => 'required|string|max:100',
-            'account_name' => 'required|string|max:255',
-            'monthly_fee' => 'required|integer|min:0',
+            'account_name' => 'nullable|string|max:255',
+            'monthly_fee' => 'nullable|integer|min:0',
             'price_monthly' => 'nullable|integer|min:0',
             'price_yearly' => 'nullable|integer|min:0',
             'price_addon_slot' => 'nullable|integer|min:0',
