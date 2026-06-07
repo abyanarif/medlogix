@@ -302,6 +302,20 @@
         <form action="{{ route('billing.upload') }}" method="POST" enctype="multipart/form-data" id="billing-form">
             @csrf
 
+            @if(auth()->user()->subscription_ends_at && now()->greaterThan(auth()->user()->subscription_ends_at) && auth()->user()->subscription_plan !== 'trial')
+                <div class="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-5 mb-8 flex items-start gap-4">
+                    <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-lg shrink-0">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-sm text-rose-900 mb-1">Langganan Berakhir</h4>
+                        <p class="text-xs text-rose-700 leading-relaxed">
+                            Akses ke Dashboard dan Manajemen Inventory dikunci karena masa aktif Anda telah habis pada {{ auth()->user()->subscription_ends_at->format('d M Y') }}. Silakan pilih paket perpanjangan di bawah ini.
+                        </p>
+                    </div>
+                </div>
+            @endif
+
             <!-- Plan Selection Section -->
             <h2 class="text-lg font-black text-slate-900 mb-4 flex items-center gap-2">
                 <i class="fas fa-cubes text-teal-850"></i>

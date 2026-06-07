@@ -217,7 +217,7 @@ class SubscriptionBillingTest extends TestCase
         $response = $this->actingAs($pharmacist)->get(route('dashboard'));
 
         $response->assertRedirect(route('billing.index'));
-        $response->assertSessionHas('error', 'Masa langganan Anda telah habis. Silakan lakukan pembayaran untuk memperpanjang akses.');
+        $response->assertSessionHas('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses sistem kembali.');
 
         $pharmacist = $pharmacist->fresh();
         $this->assertEquals('pending', $pharmacist->payment_status);
