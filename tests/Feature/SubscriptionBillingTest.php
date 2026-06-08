@@ -240,6 +240,8 @@ class SubscriptionBillingTest extends TestCase
             'account_number' => '87654321',
             'account_name' => 'MedLogix Mandiri',
             'monthly_fee' => 75000,
+            'wa_number' => '08123456789',
+            'wa_template' => 'Halo CS, saya butuh bantuan.',
         ]);
 
         $response->assertRedirect();
@@ -251,6 +253,42 @@ class SubscriptionBillingTest extends TestCase
             'key' => 'monthly_fee',
             'value' => '75000',
         ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'wa_number',
+            'value' => '08123456789',
+        ]);
+        $this->assertDatabaseHas('settings', [
+            'key' => 'wa_template',
+            'value' => 'Halo CS, saya butuh bantuan.',
+        ]);
+    }
+
+    /**
+     * Test global WhatsApp CS link sharing in views.
+     */
+    public function test_global_wa_link_sharing_in_views(): void
+    {
+        // Set WhatsApp settings
+        \App\Models\Setting::updateOrCreate(['key' => 'wa_number'], ['value' => '0812-3456-789']);
+        \App\Models\Setting::updateOrCreate(['key' => 'wa_template'], ['value' => 'Halo CS! Saya butuh bantuan.']);
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'paid',
+            'subscription_ends_at' => now()->addMonth(),
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        // Access dashboard
+        $response = $this->actingAs($pharmacist)->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        $expectedLink = 'https://wa.me/628123456789?text=' . urlencode('Halo CS! Saya butuh bantuan.');
+        
+        $response->assertViewHas('waLink', $expectedLink);
+        // Ensure the FAB is rendered with correct link
+        $response->assertSee($expectedLink, false);
     }
 
     /**
@@ -513,6 +551,103 @@ class SubscriptionBillingTest extends TestCase
         ]);
 
         $response->assertStatus(403);
+    }
+
+    /**
+     * Test admin can toggle suspension on pharmacist.
+     */
+    public function test_admin_can_toggle_suspension(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'is_suspended' => false,
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        // Toggle suspend
+        $response = $this->actingAs($admin)->post(route('admin.users.suspend', $pharmacist->id));
+        $response->assertRedirect();
+        $this->assertTrue($pharmacist->fresh()->is_suspended);
+
+        // Toggle again (unsuspend)
+        $response = $this->actingAs($admin)->post(route('admin.users.suspend', $pharmacist->id));
+        $response->assertRedirect();
+        $this->assertFalse($pharmacist->fresh()->is_suspended);
+    }
+
+    /**
+     * Test suspended user is logged out and blocked by EnsureSubscribed middleware.
+     */
+    public function test_suspended_user_is_blocked_by_middleware(): void
+    {
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'payment_status' => 'paid',
+            'subscription_ends_at' => now()->addMonth(),
+            'is_suspended' => true,
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $response = $this->actingAs($pharmacist)->get(route('dashboard'));
+        $response->assertStatus(403);
+        $this->assertFalse(auth()->check());
+    }
+
+    /**
+     * Test admin can reset password to medlogix123.
+     */
+    public function test_admin_can_reset_password(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist = User::factory()->create([
+            'role' => 'pharmacist',
+            'password' => \Illuminate\Support\Facades\Hash::make('original_password'),
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('admin.users.reset-password', $pharmacist->id));
+        $response->assertRedirect();
+        
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('medlogix123', $pharmacist->fresh()->password));
+    }
+
+    /**
+     * Test admin can export CSV file.
+     */
+    public function test_admin_can_export_csv(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'sipa' => 'SIPA-ADMIN',
+            'apotek_address' => 'Office',
+        ]);
+
+        $pharmacist = User::factory()->create([
+            'name' => 'John Doe Pharmacy',
+            'email' => 'john.doe@medlogix.test',
+            'role' => 'pharmacist',
+            'sipa' => 'SIPA-123',
+            'apotek_address' => 'Apotek Test',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.export-csv'));
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->assertStringContainsString('John Doe Pharmacy', $response->streamedContent());
     }
 }
 

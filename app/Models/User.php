@@ -36,6 +36,7 @@ class User extends Authenticatable
             'yearly_bonus_claimed' => 'boolean',
             'max_slots' => 'integer',
             'pending_addon_qty' => 'integer',
+            'is_suspended' => 'boolean',
         ];
     }
 

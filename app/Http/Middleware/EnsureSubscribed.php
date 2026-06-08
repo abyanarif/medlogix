@@ -15,6 +15,11 @@ class EnsureSubscribed
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (auth()->check() && auth()->user()->is_suspended) {
+            auth()->logout();
+            abort(403, 'Akun Anda telah dibekukan oleh Admin.');
+        }
+
         $user = $request->user();
 
         if ($user && $user->role === 'pharmacist') {

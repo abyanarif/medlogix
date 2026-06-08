@@ -50,6 +50,8 @@ class AdminController extends Controller
         // Fetch bank name and account number separately to pass to view
         $bankName = Setting::where('key', 'bank_name')->value('value') ?? '';
         $accountNumber = Setting::where('key', 'account_number')->value('value') ?? '';
+        $waNumber = Setting::where('key', 'wa_number')->value('value') ?? '';
+        $waTemplate = Setting::where('key', 'wa_template')->value('value') ?? '';
 
         // Fetch registered pharmacists with search and filter
         $usersQuery = User::where('role', 'pharmacist');
@@ -68,7 +70,7 @@ class AdminController extends Controller
 
         $users = $usersQuery->paginate(10)->withQueryString();
 
-        return view('admin.dashboard', compact('totalRevenue', 'activePharmacies', 'pendingApprovals', 'users', 'settings', 'bankName', 'accountNumber'));
+        return view('admin.dashboard', compact('totalRevenue', 'activePharmacies', 'pendingApprovals', 'users', 'settings', 'bankName', 'accountNumber', 'waNumber', 'waTemplate'));
     }
 
     /**
@@ -84,6 +86,8 @@ class AdminController extends Controller
             'price_monthly' => 'nullable|integer|min:0',
             'price_yearly' => 'nullable|integer|min:0',
             'price_addon_slot' => 'nullable|integer|min:0',
+            'wa_number' => 'nullable|string|max:50',
+            'wa_template' => 'nullable|string|max:1000',
         ]);
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
@@ -177,6 +181,94 @@ class AdminController extends Controller
         });
 
         return redirect()->back()->with('success', "Pembayaran untuk apoteker {$user->name} telah ditolak.");
+    }
+
+    /**
+     * Toggle the suspension status of a user.
+     */
+    public function toggleSuspend($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_suspended = !$user->is_suspended;
+        $user->save();
+
+        $statusMessage = $user->is_suspended ? 'dibekukan' : 'diaktifkan kembali';
+        return redirect()->back()->with('success', "Akun apoteker {$user->name} berhasil {$statusMessage}.");
+    }
+
+    /**
+     * Reset the user's password manually to 'medlogix123'.
+     */
+    public function resetPassword($id)
+    {
+        $user = User::findOrFail($id);
+        $user->password = \Illuminate\Support\Facades\Hash::make('medlogix123');
+        $user->save();
+
+        return redirect()->back()->with('success', "Password untuk apoteker {$user->name} berhasil direset ke 'medlogix123'.");
+    }
+
+    /**
+     * Export all pharmacists data to CSV.
+     */
+    public function exportCsv()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="medlogix_pharmacists_' . now()->format('Y-m-d_H-i-s') . '.csv"',
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM for Excel compatibility
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // CSV Headers
+            fputcsv($file, [
+                'Nama Apoteker',
+                'Email',
+                'Plan Aktif',
+                'Slot Obat',
+                'Status Pembayaran',
+                'Status Akun'
+            ]);
+
+            // Query users in chunks for performance
+            User::where('role', 'pharmacist')->chunk(100, function ($users) use ($file) {
+                foreach ($users as $user) {
+                    $plan = match($user->subscription_plan) {
+                        'monthly' => 'Bulanan',
+                        'yearly' => 'Tahunan',
+                        'trial' => 'Trial',
+                        default => 'Tidak Aktif',
+                    };
+                    $status = match($user->payment_status) {
+                        'paid' => 'Paid (Aktif)',
+                        'pending' => 'Pending Review',
+                        'rejected' => 'Rejected',
+                        default => 'Unknown',
+                    };
+                    $accountStatus = $user->is_suspended ? 'Suspended' : 'Aktif';
+
+                    fputcsv($file, [
+                        $user->name,
+                        $user->email,
+                        $plan,
+                        ($user->max_slots ?? 50) . ' Slot',
+                        $status,
+                        $accountStatus
+                    ]);
+                }
+            });
+
+            fclose($file);
+        };
+
+        return new \Symfony\Component\HttpFoundation\StreamedResponse($callback, 200, $headers);
     }
 }
 

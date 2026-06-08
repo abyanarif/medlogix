@@ -62,5 +62,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/users/{id}/approve', [AdminController::class, 'approve'])->name('admin.users.approve');
         Route::post('/users/{id}/reject', [AdminController::class, 'reject'])->name('admin.users.reject');
         Route::post('/settings', [AdminController::class, 'updateSettings'])->name('admin.settings.update');
+        Route::post('/users/{id}/suspend', [AdminController::class, 'toggleSuspend'])->name('admin.users.suspend');
+        Route::post('/users/{id}/reset-password', [AdminController::class, 'resetPassword'])->name('admin.users.reset-password');
+        Route::get('/export-csv', [AdminController::class, 'exportCsv'])->name('admin.export-csv');
     });
 });

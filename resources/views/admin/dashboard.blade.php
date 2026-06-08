@@ -117,6 +117,12 @@
                         <i class="fas fa-search text-xs"></i> Cari
                     </button>
                     <a 
+                        href="{{ route('admin.export-csv') }}" 
+                        class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition duration-150 text-sm flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                        <i class="fas fa-file-csv text-xs"></i> Download Data (CSV)
+                    </a>
+                    <a 
                         href="{{ route('admin.dashboard') }}" 
                         class="w-full md:w-auto text-center text-slate-500 hover:text-slate-900 font-semibold px-4 py-2.5 rounded-xl hover:bg-slate-100/85 transition duration-150 text-sm block border border-transparent hover:border-slate-200"
                     >
@@ -233,33 +239,57 @@
 
                         <!-- Action Column -->
                         <td class="py-4.5 px-6 text-center">
-                            @if ($user->payment_status === 'pending')
-                                @if ($user->payment_receipt)
-                                    <div class="inline-flex items-center gap-2">
-                                        <!-- Approve Action -->
-                                        <form action="{{ route('admin.users.approve', $user->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui pembayaran ini?');">
-                                            @csrf
-                                            <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition shadow-sm">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                        </form>
+                            <div class="flex flex-col items-center justify-center gap-2">
+                                <!-- TOP ROW (PAYMENT ACTIONS) -->
+                                @if ($user->payment_status === 'pending')
+                                    @if ($user->payment_receipt)
+                                        <div class="flex flex-row items-center gap-1.5 justify-center">
+                                            <!-- Approve Action -->
+                                            <form action="{{ route('admin.users.approve', $user->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui pembayaran ini?');" class="inline">
+                                                @csrf
+                                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-2 py-1 rounded-lg text-xs flex items-center gap-1 transition shadow-sm justify-center">
+                                                    <i class="fas fa-check text-[10px]"></i> Approve
+                                                </button>
+                                            </form>
 
-                                        <!-- Reject Action -->
-                                        <form action="{{ route('admin.users.reject', $user->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menolak pembayaran ini?');">
-                                            @csrf
-                                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 transition shadow-sm">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </form>
-                                    </div>
-                                @else
-                                    <span class="text-sm text-slate-400 italic">Menunggu Bukti</span>
+                                            <!-- Reject Action -->
+                                            <form action="{{ route('admin.users.reject', $user->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menolak pembayaran ini?');" class="inline">
+                                                @csrf
+                                                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2 py-1 rounded-lg text-xs flex items-center gap-1 transition shadow-sm justify-center">
+                                                    <i class="fas fa-times text-[10px]"></i> Reject
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-slate-400 italic whitespace-nowrap">Menunggu Bukti</span>
+                                    @endif
                                 @endif
-                            @else
-                                <span class="text-xs text-slate-600 font-semibold italic">
-                                    Tidak ada aksi
-                                </span>
-                            @endif
+
+                                <!-- BOTTOM ROW (ACCOUNT MANAGEMENT) -->
+                                <div class="flex flex-row items-center gap-1 border-t border-slate-100 pt-2 mt-1 w-full justify-center">
+                                    <!-- Suspend/Unsuspend Action -->
+                                    <form action="{{ route('admin.users.suspend', $user->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @if ($user->is_suspended)
+                                            <button type="submit" class="text-[10px] px-2 py-1 rounded bg-red-100 text-red-600 hover:bg-red-200 transition font-bold whitespace-nowrap">
+                                                <i class="fas fa-unlock text-[8px]"></i> Unsuspend
+                                            </button>
+                                        @else
+                                            <button type="submit" class="text-[10px] px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition font-bold whitespace-nowrap">
+                                                <i class="fas fa-ban text-[8px]"></i> Suspend
+                                            </button>
+                                        @endif
+                                    </form>
+
+                                    <!-- Reset Password Action -->
+                                    <form action="{{ route('admin.users.reset-password', $user->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        <button type="submit" onclick="return confirm('Reset password ke medlogix123?')" class="text-[10px] px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200 transition font-bold whitespace-nowrap">
+                                            <i class="fas fa-key text-[8px]"></i> Reset Pass
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -369,6 +399,40 @@
                         class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm font-semibold"
                         placeholder="Contoh: 30000"
                     >
+                </div>
+            </div>
+            <!-- WhatsApp Customer Support Fields -->
+            <div class="border-t border-slate-200 pt-5 mt-5">
+                <h3 class="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
+                    <i class="fab fa-whatsapp text-emerald-600 text-lg"></i>
+                    WhatsApp Customer Support
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Nomor WhatsApp CS -->
+                    <div>
+                        <label for="wa_number" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Nomor WhatsApp CS</label>
+                        <input 
+                            id="wa_number" 
+                            type="text" 
+                            name="wa_number" 
+                            value="{{ old('wa_number', $waNumber ?? '') }}"
+                            class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm"
+                            placeholder="Contoh: 08123456789"
+                        >
+                    </div>
+
+                    <!-- Pesan Template Default -->
+                    <div>
+                        <label for="wa_template" class="block text-xs font-bold uppercase tracking-wider text-slate-650 mb-1.5">Pesan Template Default</label>
+                        <input 
+                            id="wa_template" 
+                            type="text" 
+                            name="wa_template" 
+                            value="{{ old('wa_template', $waTemplate ?? '') }}"
+                            class="block w-full px-3.5 py-2.5 border border-slate-300 bg-white text-slate-900 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition text-sm"
+                            placeholder="Contoh: Halo MedLogix, saya butuh bantuan..."
+                        >
+                    </div>
                 </div>
             </div>
 
